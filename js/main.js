@@ -96,22 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const fullName = contactForm.querySelector('#name')?.value.trim() || '';
             const phone = contactForm.querySelector('#phone')?.value.trim() || '';
             const email = contactForm.querySelector('#email')?.value.trim() || '';
-            const courseSelect = contactForm.querySelector('#courseInterest');
             const message = contactForm.querySelector('#message')?.value.trim() || '';
 
-            const courseInterest = courseSelect && courseSelect.selectedIndex > 0
-                ? courseSelect.options[courseSelect.selectedIndex].text
-                : 'Not selected';
-
             const whatsappText = [
-                'New Student Inquiry',
+                '*New Message from Website*',
                 '',
-                `Full Name: ${fullName}`,
-                `Phone Number: ${phone}`,
-                `Email Address: ${email}`,
-                `Course Interest: ${courseInterest}`,
-                `Message: ${message || 'N/A'}`
+                `*Name:* ${fullName}`,
+                `*Phone:* ${phone}`,
+                `*Email:* ${email}`,
+                `*Message:* ${message || 'N/A'}`
             ].join('\n');
+
 
             // 03092333121 in international format for wa.me
             const whatsappNumber = '923092333121';
