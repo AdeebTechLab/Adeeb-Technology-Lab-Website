@@ -293,6 +293,90 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // ========== TEAM FROM GOOGLE SHEETS ==========
+    const teamGrid = document.getElementById('teamGrid');
+    if (teamGrid) {
+        const SHEET_ID = '167Upu6HpZkKukOzuN_jrb8IATrTxwqNSOKLFrl-p8tQ';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=0`;
+
+        fetch(SHEET_URL)
+            .then(res => {
+                if (!res.ok) throw new Error('Sheet fetch failed');
+                return res.text();
+            })
+            .then(csv => {
+                const lines = csv.trim().split('\n');
+                if (lines.length < 2) {
+                    teamGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">No team members found.</p>';
+                    return;
+                }
+
+                const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+                const nameIdx = headers.indexOf('Name');
+                const deptIdx = headers.indexOf('Department');
+                const imgIdx = headers.indexOf('Image');
+                const emailIdx = headers.indexOf('Email');
+                const githubIdx = headers.indexOf('Github');
+
+                let html = '';
+                for (let i = 1; i < lines.length; i++) {
+                    const row = parseCSVRow(lines[i]);
+                    const name = row[nameIdx] || '';
+                    const dept = row[deptIdx] || '';
+                    const img = row[imgIdx] || '';
+                    const email = row[emailIdx] || '';
+                    const github = row[githubIdx] || '';
+
+                    if (!name) continue;
+
+                    html += `
+                        <article class="team-card">
+                            <div class="team-image">
+                                <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='assets/adeeb.png';">
+                            </div>
+                            <div class="team-info">
+                                <h3>${name}</h3>
+                                <p class="team-role">${dept}</p>
+                                <div class="team-links">
+                                    ${github ? `<a href="${github}" target="_blank" rel="noopener" aria-label="GitHub"><i class="fab fa-github"></i></a>` : ''}
+                                    ${email ? `<a href="mailto:${email}" aria-label="Email"><i class="fas fa-envelope"></i></a>` : ''}
+                                </div>
+                            </div>
+                        </article>`;
+                }
+
+                teamGrid.innerHTML = html || '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">No team members found.</p>';
+            })
+            .catch(err => {
+                console.error('Team load error:', err);
+                teamGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);"><i class="fas fa-exclamation-triangle"></i> Could not load team data. Make sure the Google Sheet is published to the web.</p>';
+            });
+
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let c = 0; c < row.length; c++) {
+                const ch = row[c];
+                if (ch === '"') {
+                    if (inQuotes && row[c + 1] === '"') {
+                        current += '"';
+                        c++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+    }
+
     // ========== PRELOADER REMOVE ==========
     document.body.classList.add('loaded');
 });
