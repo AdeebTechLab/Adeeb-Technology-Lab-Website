@@ -396,10 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+                const snoIdx = headers.findIndex(h => /s\.?\s*no|serial|sno/i.test(h));
                 const nameIdx = headers.findIndex(h => /company|name/i.test(h));
                 const dateIdx = headers.findIndex(h => /date/i.test(h));
                 const imgIdx = headers.findIndex(h => /logo|image|img/i.test(h));
 
+                const si = snoIdx >= 0 ? snoIdx : 0;
                 const ni = nameIdx >= 0 ? nameIdx : 1;
                 const di = dateIdx >= 0 ? dateIdx : 2;
                 const ii = imgIdx >= 0 ? imgIdx : 3;
@@ -407,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let html = '';
                 for (let i = 1; i < lines.length; i++) {
                     const row = parseCSVRow(lines[i]);
+                    const sno = row[si] || '';
                     const name = row[ni] || '';
                     const date = row[di] || '';
                     const img = row[ii] || '';
@@ -415,6 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     html += `
                         <article class="logo-card">
+                            ${sno ? `<span class="logo-serial">${sno}</span>` : ''}
                             <div class="logo-image">
                                 <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='assets/adeeb.png';">
                             </div>
