@@ -377,6 +377,86 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ========== LOGO FROM GOOGLE SHEETS ==========
+    const logoGrid = document.getElementById('logoGrid');
+    if (logoGrid) {
+        const SHEET_ID = '167Upu6HpZkKukOzuN_jrb8IATrTxwqNSOKLFrl-p8tQ';
+        const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=1067595971`;
+
+        fetch(SHEET_URL)
+            .then(res => {
+                if (!res.ok) throw new Error('Sheet fetch failed');
+                return res.text();
+            })
+            .then(csv => {
+                const lines = csv.trim().split('\n');
+                if (lines.length < 2) {
+                    logoGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">No logos found.</p>';
+                    return;
+                }
+
+                const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+                const nameIdx = headers.findIndex(h => /company|name/i.test(h));
+                const dateIdx = headers.findIndex(h => /date/i.test(h));
+                const imgIdx = headers.findIndex(h => /logo|image|img/i.test(h));
+
+                const ni = nameIdx >= 0 ? nameIdx : 1;
+                const di = dateIdx >= 0 ? dateIdx : 2;
+                const ii = imgIdx >= 0 ? imgIdx : 3;
+
+                let html = '';
+                for (let i = 1; i < lines.length; i++) {
+                    const row = parseCSVRow(lines[i]);
+                    const name = row[ni] || '';
+                    const date = row[di] || '';
+                    const img = row[ii] || '';
+
+                    if (!name && !img) continue;
+
+                    html += `
+                        <article class="logo-card">
+                            <div class="logo-image">
+                                <img src="${img}" alt="${name}" onerror="this.onerror=null;this.src='assets/adeeb.png';">
+                            </div>
+                            <div class="logo-info">
+                                <h3>${name}</h3>
+                                ${date ? `<p class="logo-date">${date}</p>` : ''}
+                            </div>
+                        </article>`;
+                }
+
+                logoGrid.innerHTML = html || '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">No logos found.</p>';
+            })
+            .catch(err => {
+                console.error('Logo load error:', err);
+                logoGrid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text-secondary);"><i class="fas fa-exclamation-triangle"></i> Could not load logo data. Make sure the Google Sheet is published to the web.</p>';
+            });
+
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let c = 0; c < row.length; c++) {
+                const ch = row[c];
+                if (ch === '"') {
+                    if (inQuotes && row[c + 1] === '"') {
+                        current += '"';
+                        c++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+    }
+
     // ========== PRELOADER REMOVE ==========
     document.body.classList.add('loaded');
 });
